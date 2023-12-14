@@ -120,6 +120,9 @@ class SecurityApiManagerMiddleware
         if ($repostNum >= $dailyMaxReportNum) {
             return false;
         }
+        if(empty($repostNum)){
+            Cache::set($memCacheKey,0);
+        }
         $repostNum = Cache::increment($memCacheKey);
         if ($repostNum > $dailyMaxReportNum) {
             Cache::decrement($memCacheKey);
