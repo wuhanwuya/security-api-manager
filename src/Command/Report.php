@@ -36,26 +36,30 @@ class Report extends Command
                 }
                 $requestInfo = empty($v['request_info']) ? [] : json_decode($v['request_info'], true);
                 $responseInfo = empty($v['response_info']) ? [] : json_decode($v['response_info'], true);
+                $requestData = [
+                    'jsonDataList' => [
+                        json_encode([
+                            'timeStamp' => $v['time_stamp'],
+                            'clientIp' => $v['client_ip'],
+                            'serviceName' => $v['service_name'],
+                            'domain' => $v['domain'],
+                            'method' => $v['method'],
+                            'requestPath' => $v['request_path'],
+                            'requestParam' => !empty($requestInfo['params']) ? json_encode($requestInfo['params'], JSON_UNESCAPED_UNICODE) : "",
+                            'requestHeader' => $requestInfo['header'] ?? "",
+                            'responseCode' => $responseInfo['code'] ?? "true",
+                            'responseLength' => $v['response_length'] ?? 0,
+                            'responseHeader' => $responseInfo['header'] ?? "",
+                            'responseContent' => !empty($responseInfo['content']) ? json_encode($responseInfo['content'], JSON_UNESCAPED_UNICODE) : "",
+                            'endpoint' => $v['hash_code']
+                        ],JSON_UNESCAPED_UNICODE)
+                    ]
+                ];
+                echo json_encode($requestData).PHP_EOL;
                 $response = $client->request('POST', $reportUrl,
                     [
-                        'form_params' => [
-                            'jsonDataList' => json_encode( [
-                                'timeStamp' => $v['time_stamp'],
-                                'clientIp' => $v['client_ip'],
-                                'serviceName' => $v['service_name'],
-                                'domain' => $v['domain'],
-                                'method' => $v['method'],
-                                'requestPath' => $v['request_path'],
-                                'requestParam' => !empty($requestInfo['params']) ? json_encode($requestInfo['params'], JSON_UNESCAPED_UNICODE) : "",
-                                'requestHeader' => $requestInfo['header'] ?? "",
-                                'responseCode' => $responseInfo['code'] ?? "true",
-                                'responseLength' => $v['response_length'] ?? 0,
-                                'responseHeader' => $responseInfo['header'] ?? "",
-                                'responseContent' => !empty($responseInfo['content']) ? json_encode($responseInfo['content'], JSON_UNESCAPED_UNICODE) : "",
-                                'endpoint' => $v['hash_code']
-                            ],JSON_UNESCAPED_UNICODE)
-                        ],
-                        'headers' => ['Content-Type' => 'application/x-www-form-urlencoded']
+                        'json' => $requestData,
+                        'headers' => ['Content-Type' => 'application/json']
                     ]);
                 if ($response->getStatusCode() === 200) {
                     $successIds[] = $v['id'];
