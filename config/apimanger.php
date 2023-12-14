@@ -6,8 +6,10 @@ return [
     "check_type" => 'db',
     //单个接口单日最大次数
     "daily_max_report_num" => 10,
+    //最大响应的长度，最大10万
+    "max_response_length" => 100000,
     //取pk的serviceName
-    "service_name" => "",
+    "service_name" => "php_insight_api_qa",
     //清理的周期 （xxx天之后把之前数据库数据清理掉）
     'clear_day' => 7
 ];
