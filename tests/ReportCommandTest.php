@@ -4,7 +4,6 @@
 namespace Hso\TestApi\Test;
 
 use Hso\TestApi\Models\SecurityApiManager;
-use Hso\TestApi\Test\TestCase;
 use Illuminate\Foundation\Testing\Concerns\InteractsWithConsole;
 
 class ReportCommandTest extends TestCase

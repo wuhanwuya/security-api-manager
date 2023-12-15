@@ -17,6 +17,7 @@ class Report extends Command
     public function handle()
     {
         $reportUrl = config('apimanger.report_url');
+        $onceReportNum = config('apimanger.once_report_num')??500;
         if (empty($reportUrl)) {
             echo "----上报失败:缺少配置-----" . PHP_EOL;
             die;
@@ -24,7 +25,7 @@ class Report extends Command
         $list = SecurityApiManager::query()
             ->where('sync_status', 0)
             ->where('created_time', '>=', date("Y-m-d H:i:s", time() - 86400))
-            ->orderBy('id', 'asc')->limit(500)->get();
+            ->orderBy('id', 'asc')->limit($onceReportNum)->get();
         $list = empty($list) ? [] : $list->toArray();
         $client = new Client();
         $successIds = [];
@@ -51,11 +52,11 @@ class Report extends Command
                             'responseLength' => $v['response_length'] ?? 0,
                             'responseHeader' => $responseInfo['header'] ?? "",
                             'responseContent' => !empty($responseInfo['content']) ? json_encode($responseInfo['content'], JSON_UNESCAPED_UNICODE) : "",
-                            'endpoint' => $v['hash_code']
+                            //todo 更改参数
+                            'endpoint' => "{{$v['method']}}/".$v['request_path']
                         ],JSON_UNESCAPED_UNICODE)
                     ]
                 ];
-                echo json_encode($requestData).PHP_EOL;
                 $response = $client->request('POST', $reportUrl,
                     [
                         'json' => $requestData,

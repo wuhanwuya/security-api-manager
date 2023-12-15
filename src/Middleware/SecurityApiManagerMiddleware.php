@@ -35,9 +35,9 @@ class SecurityApiManagerMiddleware
 
     private function getMaxResponseLength()
     {
-        $maxResponseLength = empty(config('apimanger.max_response_length')) ? 1000000 : config('apimanger.max_response_length');
+        $maxResponseLength = empty(config('apimanger.max_response_length')) ? 100000 : config('apimanger.max_response_length');
 
-        return min((int)$maxResponseLength, 1000000);
+        return min((int)$maxResponseLength, 100000);
     }
 
     /**
@@ -81,6 +81,7 @@ class SecurityApiManagerMiddleware
     private function checkMaxResponseLength($response): bool
     {
         $maxResponseLength = $this->getMaxResponseLength();
+        echo $maxResponseLength . PHP_EOL;
         if ($this->getResponseLength($response) <= $maxResponseLength) {
             return true;
         }
@@ -114,18 +115,19 @@ class SecurityApiManagerMiddleware
      */
     private function checkDailyMaxNumByCache($dailyMaxReportNum, $requestPath): bool
     {
-        $memCacheKey = md5($requestPath) . '_' . date("Y-m-d");
-        $repostNum = Cache::get($memCacheKey);
+        $cacheKey = md5($requestPath) . '_' . date("Y-m-d");
+        $repostNum = Cache::get($cacheKey);
         $repostNum = empty($repostNum) ? 0 : $repostNum;
         if ($repostNum >= $dailyMaxReportNum) {
             return false;
         }
         if(empty($repostNum)){
-            Cache::set($memCacheKey,0);
+            //这里为了兼容是memcache的时候直接increment失效的情况，可能并发情况下导致多加数据，但问题不大
+            Cache::set($cacheKey,0);
         }
-        $repostNum = Cache::increment($memCacheKey);
+        $repostNum = Cache::increment($cacheKey);
         if ($repostNum > $dailyMaxReportNum) {
-            Cache::decrement($memCacheKey);
+            Cache::decrement($cacheKey);
             return false;
         }
         return true;
@@ -154,12 +156,12 @@ class SecurityApiManagerMiddleware
             'time_stamp' => microtime(true),
             'client_ip' => $this->getIp(),
             'service_name' => config('apimanger.service_name') ?? "",
-            'domain' => $request->getHost(),
+            'domain' => $request->getSchemeAndHttpHost(),
             'method' => $request->getMethod(),
             'request_path' => $request->path(),
             'request_info' => json_encode([
                 'params' => $request->all(),
-                'header' => $request->header('Content-Type', ''),
+                'header' => $this->getHeaders($request),
             ], JSON_UNESCAPED_UNICODE),
             'response_length' => $this->getResponseLength($response),
             'response_info' => json_encode([
@@ -172,6 +174,13 @@ class SecurityApiManagerMiddleware
         ];
         SecurityApiManager::query()->insert($data);
     }
+
+    private function getHeaders($request)
+    {
+        $headers = $request->headers->all();
+        return http_build_query($headers, '', ';');
+    }
+
 
     private function getIp()
     {

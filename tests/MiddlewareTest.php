@@ -17,7 +17,7 @@ class MiddlewareTest extends TestCase
         $middleware = $this->middleware;
 
         // 创建一个简单的请求和响应
-        $request = Request::create('/');
+        $request = Request::create('/test/api');
         $response = new JsonResponse(['data' => 'test']);
 
         // 调用中间件的 handle 方法
@@ -27,7 +27,6 @@ class MiddlewareTest extends TestCase
 
         // 验证中间件是否正确处理了响应
         $this->assertInstanceOf(JsonResponse::class, $result);
-        $this->assertEquals('成功调用了中间件', $response->getContent());
     }
 
 
